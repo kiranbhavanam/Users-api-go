@@ -3,12 +3,13 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"user-management/internal/errors"
 	"user-management/internal/model"
 )
 
 type UserRepo interface{
 	GetAll()([]model.User,error)
-	GetByID()(*model.User,error)
+	GetByID(id int)(*model.User,error)
 	Create(user model.User)error
 	Update(id int,user model.User)error
 	Delete(id int)error
@@ -30,7 +31,7 @@ func(r *PostgresRepository)GetAll()([]model.User,error){
 	query:=`select id,username,email,name,isactive from Users`
 	rows,err:=r.db.Query(query)
 	if err!=nil{
-		return nil, fmt.Errorf("error while querying:%w",err)
+		return nil , fmt.Errorf("error while querying:%w",err)
 
 	}
 	defer rows.Close()
@@ -47,9 +48,9 @@ func(r *PostgresRepository)GetAll()([]model.User,error){
 
 }
 
-func(r *PostgresRepository)GetByID()(*model.User,error){
-	query:=`select * from Users`
-	row:=r.db.QueryRow(query)
+func(r *PostgresRepository)GetByID(id int)(*model.User,error){
+	query:=`select * from Users wher id=$1`
+	row:=r.db.QueryRow(query,id)
 	var user model.User
 	err:=row.Scan(&user.ID,&user.Username,&user.Email,&user.Password,&user.Name,&user.IsActive)
 	if err!=nil{
@@ -66,6 +67,7 @@ func(r *PostgresRepository)	Create(user model.User)error{
 	return nil
 }
 func(r *PostgresRepository)	Update(id int,user model.User)error{
+		//can optimize by calling existsbyid here clear redundant code.
 	query:=`update Users set username=$1 email=$2 password=$3 updated_at=CURRENT_TIMESTAMP  where id=$4 `
 	result,err:=r.db.Exec(query,user.Username,user.Email,user.Password,user.ID)
 	if err!=nil{
@@ -76,11 +78,12 @@ func(r *PostgresRepository)	Update(id int,user model.User)error{
 		return fmt.Errorf("unable to get rows affectted")
 	}
 	if rowsAffected==0{
-		return fmt.Errorf("no such user with the provided id")
+		return errors.NewNotFoundError(id,"no user with the given id")
 	}
 	return nil
 }
 func(r *PostgresRepository)	Delete(id int)error{
+	//can optimize by calling existsbyid here clear redundant code.
 	query:=`delete from Users where id=$1`
 	result,err:=r.db.Exec(query,id)
 	if err!=nil{
@@ -91,7 +94,24 @@ func(r *PostgresRepository)	Delete(id int)error{
 		return fmt.Errorf("unable to get rows affectted")
 	}
 	if rowsAffected==0{
-		return fmt.Errorf("no such user with the provided id")
+		return errors.NewNotFoundError(id,"no user with the given id")
+	}
+	return nil
+}
+
+func (r *PostgresRepository) ExistsByID(id int)error{
+	query:=`select * from Users where id=$1`
+	result,err:=r.db.Exec(query,id)
+	if err!=nil{
+		return fmt.Errorf("error while executing query %w",err)
+	}
+	rowsaffected,err:=result.RowsAffected()
+		
+	if err!=nil{
+		return fmt.Errorf("unable to get rows affectted")
+	}
+	if rowsaffected==0{
+		return errors.NewNotFoundError(id,"no user with the given id")
 	}
 	return nil
 }
