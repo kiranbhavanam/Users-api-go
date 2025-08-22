@@ -111,7 +111,7 @@ func (r *PostgresRepository) ExistsByID(id int)error{
 		return fmt.Errorf("unable to get rows affectted")
 	}
 	if rowsaffected==0{
-		return errors.NewNotFoundError(id,"no user with the given id")
+		return errors.NewDuplicateError(id,"user exists with the given id")
 	}
 	return nil
 }
