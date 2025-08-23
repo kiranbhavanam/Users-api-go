@@ -263,25 +263,3 @@ psql -h localhost -p 5433 -U postgres -d userdb -c "SELECT * FROM Users;"
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Support
-
-If you encounter any issues:
-- Check the PostgreSQL connection and database setup
-- Verify the table structure matches the expected schema
-- Review the error logs for detailed error messages
-- Create an issue on GitHub for additional support
-
-***
-
-**Note**: This is a development version. For production use, implement proper password hashing, authentication, and additional security measures.
-
-[1](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/86522524/931ead1d-da63-4375-bcb9-978abbf70453/main.go)
-[2](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/86522524/8c112055-45f9-4e42-8e07-feaecf9ca57c/user_repo.go)
-[3](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/86522524/acfb48bc-b38b-4461-931e-0dd3c3558970/user_service.go)
-[4](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/86522524/5f836604-df67-426d-81df-1db459eec803/config.go)
-[5](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/86522524/bc25f943-e262-4e87-a63c-c24621129a08/user_handlers.go)
