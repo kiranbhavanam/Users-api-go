@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"user-management/internal/errors"
@@ -19,7 +20,7 @@ func NewUserHandler(service *service.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
 func (h *UserHandler) GetAllHandler(w http.ResponseWriter, r *http.Request) {
-	users, err := h.service.GetAllProducts()
+	users, err := h.service.GetAllUsers()
 	if err != nil {
 		http.Error(w, "unable to retrieve users", http.StatusInternalServerError)
 		return
@@ -36,8 +37,11 @@ func (h *UserHandler) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid id format", http.StatusBadRequest)
 		return
 	}
-	user, err := h.service.GetProduct(id)
-	h.handleServiceError(w,err)
+	user, err := h.service.GetUser(id)
+	if err!=nil{
+		h.handleServiceError(w,err)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
@@ -49,8 +53,11 @@ func (h *UserHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w,"invalid json ",http.StatusBadRequest)
 		return
 	}
-	err=h.service.CreateUser(user)
-	h.handleServiceError(w,err)
+	err=h.service.CreateUser(&user)
+	if err!=nil{
+		h.handleServiceError(w,err)
+		return
+	}
 	w.Header().Set("Content-Type","application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
@@ -59,6 +66,7 @@ func (h *UserHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) UpdateHandler(w http.ResponseWriter,r *http.Request){
 	vars:=mux.Vars(r)
 	id,err:=strconv.Atoi(vars["id"])
+	fmt.Println("update handler called",id)
 	if err!=nil{
 		http.Error(w,"invalid id format ",http.StatusBadRequest)
 		return
@@ -69,12 +77,23 @@ func (h *UserHandler) UpdateHandler(w http.ResponseWriter,r *http.Request){
 		http.Error(w,"invalid json",http.StatusBadRequest)
 		return
 	}
+	fmt.Println("ddata to update:",user)
 
 	err=h.service.UpdateUser(id,user)
-	h.handleServiceError(w,err)
-	w.Header().Set("Content-Type","application/json")
+	if err!=nil{
+		fmt.Println("encountered error while updating",err)
+		h.handleServiceError(w,err)
+		return
+	}
+	updatedUser, err := h.service.GetUser(id)
+	fmt.Println("updated user:",updatedUser)
+    if err != nil {
+        h.handleServiceError(w, err)
+        return
+    }
+		w.Header().Set("Content-Type","application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(updatedUser)
 }
 
 func (h *UserHandler) DeleteHandler(w http.ResponseWriter,r *http.Request){
@@ -86,7 +105,10 @@ func (h *UserHandler) DeleteHandler(w http.ResponseWriter,r *http.Request){
 	}
 	
 	err=h.service.DeleteUser(id)
-	h.handleServiceError(w,err)
+	if err!=nil{
+		h.handleServiceError(w,err)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
 func (h *UserHandler) handleServiceError(w http.ResponseWriter,err error){

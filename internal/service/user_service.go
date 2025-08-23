@@ -8,26 +8,26 @@ import (
 )
 
 type UserService struct {
-	repo repository.PostgresRepository
+	repo repository.UserRepo
 }
 
-func NewUserService(repo repository.PostgresRepository) *UserService {
+func NewUserService(repo repository.UserRepo) *UserService {
 	return &UserService{repo: repo}
 }
 
-func (s *UserService) GetAllProducts() ([]model.User, error) {
+func (s *UserService) GetAllUsers() ([]model.User, error) {
 	return s.repo.GetAll()
 }
 
-func (s *UserService) GetProduct(id int) (*model.User, error) {
+func (s *UserService) GetUser(id int) (*model.User, error) {
 	return s.repo.GetByID(id)
 }
-func (s *UserService) CreateUser(user model.User) error {
-	if err := s.validateUser(user); err != nil {
+func (s *UserService) CreateUser(user *model.User) error {
+	if err := s.validateUser(*user); err != nil {
 		return err
 	}
-	if err:=s.repo.ExistsByID(user.ID);err!=nil{
-		return err
+	if s.repo.ExistsByEmail(user.Email){
+		return errors.NewDuplicateError(user.ID,"already existed with the email")
 	}
 	return s.repo.Create(user)
 }
@@ -35,6 +35,24 @@ func (s *UserService) UpdateUser(id int, user model.User) error {
 	if id < 0 {
 		return errors.NewValidationError(id, "id cannot be negative")
 	}
+	 existingUser, err := s.repo.GetByID(id)
+    if err != nil {
+        return err
+    }
+    
+    // Check if username is changing and if new username already exists
+    if user.Username != existingUser.Username {
+        if s.repo.ExistsByUsername(user.Username) {
+            return errors.NewDuplicateError("username", user.Username)
+        }
+    }
+    
+    // Check if email is changing and if new email already exists  
+    if user.Email != existingUser.Email {
+        if s.repo.ExistsByEmail(user.Email) {
+            return errors.NewDuplicateError("email", user.Email)
+        }
+    }
 	return s.repo.Update(id,user)
 }
 func(s *UserService) DeleteUser(id int)error{

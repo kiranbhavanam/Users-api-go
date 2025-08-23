@@ -36,13 +36,13 @@ func NewNotFoundError(id int,resource string) *NotFoundError{
 }
 
 type DuplicateError struct{
-	Resource int
+	Resource interface{}
 	Value string
 }
 func(e *DuplicateError) Error() string{
-	return (fmt.Sprintf("%d already exists: %s",e.Resource,e.Value))
+	return (fmt.Sprintf("%s already exists: %s",e.Resource,e.Value))
 }
-func NewDuplicateError(resource int,value string)*DuplicateError{
+func NewDuplicateError(resource interface{},value string)*DuplicateError{
 	return &DuplicateError{
 		Resource: resource,
 		Value: value,
