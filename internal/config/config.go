@@ -2,10 +2,17 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
 )
+
+type Config struct{
+	dburl string
+	JWTSecret string
+	JWTExpiry time.Duration
+}
 
 type DatabaseConfig struct{
 	Host string
@@ -18,7 +25,19 @@ type DatabaseConfig struct{
 	MaxIdleConns int
 	MaxLifeTime time.Duration
 }
-
+func LoadConfig() *Config{
+	dbURL:=LoadDBConfig().GetConnectionString()
+	if dbURL==""{
+		log.Fatal("DB url can't be empty ")
+	}
+	secretkey:=getEnv("JWTSecret","secret_key")
+	expiry,_:=time.ParseDuration(getEnv("JWTExpiry","5m"))
+	return &Config{
+		dburl: dbURL,
+		JWTSecret: secretkey,
+		JWTExpiry: expiry,
+	}
+}
 func LoadDBConfig() *DatabaseConfig{
 	port,_:=strconv.Atoi(getEnv("DB_PORT","5433"))
 	return &DatabaseConfig{

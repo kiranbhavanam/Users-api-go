@@ -111,6 +111,28 @@ func (h *UserHandler) DeleteHandler(w http.ResponseWriter,r *http.Request){
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+
+func(h *UserHandler)LoginHandler(w http.ResponseWriter,r *http.Request){
+	var LoginRequest model.LoginRequest
+	err:=json.NewDecoder(r.Body).Decode(&LoginRequest)
+	if err!=nil{
+		http.Error(w,`{"error":"Invalid json format"}`,http.StatusBadRequest)
+		return
+	}
+	token,err:=h.service.Login(LoginRequest.Email,LoginRequest.Password)
+	if err!=nil{
+		h.handleServiceError(w,err)
+		return
+	}
+	response:=model.LoginResponse{
+		Token: token,
+		Message: "Login successful",
+	}
+	w.Header().Set("Content-Type","application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
 func (h *UserHandler) handleServiceError(w http.ResponseWriter,err error){
 	switch e:=err.(type){
 	case *errors.ValidationError:

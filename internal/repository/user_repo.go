@@ -53,10 +53,10 @@ func (r *PostgresRepository) GetAll() ([]model.User, error) {
 }
 
 func (r *PostgresRepository) GetByID(id int) (*model.User, error) {
-	query := `select id,username,email,name,isactive from Users where id=$1`
+	query := `select id,username,email,password,name,isactive from Users where id=$1`
 	row := r.db.QueryRow(query, id)
 	var user model.User
-	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Name, &user.IsActive)
+	err := row.Scan(&user.ID, &user.Username, &user.Email,&user.Password, &user.Name, &user.IsActive)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewNotFoundError(id, "no user with that id")
@@ -66,21 +66,22 @@ func (r *PostgresRepository) GetByID(id int) (*model.User, error) {
 	return &user, nil
 }
 func (r *PostgresRepository) GetByEmail(email string) (*model.User, error) {
-	query := `select id,username,email,name,isactive from Users where email=$1`
+	if r.ExistsByEmail(email){
+	query := `select id,username,email,name,isactive,password from Users where email=$1`
 	row := r.db.QueryRow(query,email)
 	var user model.User
-	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Name, &user.IsActive)
+	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Name, &user.IsActive,&user.Password)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.NewNotFoundError(email, "no user with that id")
-		}
 		return nil, fmt.Errorf("error while scaning row data:%w ", err)
 	}
 	return &user, nil
 }
+	return nil, errors.NewNotFoundError(email, "no user with that id")
+
+}
 func (r *PostgresRepository) Create(user *model.User) error {
-	query := `insert into Users (username,email,password) values($1,$2,$3) returning id`
-	err := r.db.QueryRow(query, user.Username, user.Email, user.Password).Scan(&user.ID)
+	query := `insert into Users (username,email,password,name) values($1,$2,$3,$4) returning id`
+	err := r.db.QueryRow(query, user.Username, user.Email, user.Password,user.Name).Scan(&user.ID)
 	if err != nil {
 		return fmt.Errorf("error while scaning row data:%w ", err)
 	}

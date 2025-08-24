@@ -3,19 +3,24 @@ package service
 import (
 	"fmt"
 	"strings"
+	"user-management/internal/config"
 	"user-management/internal/errors"
 	"user-management/internal/model"
 	"user-management/internal/repository"
+	"user-management/internal/auth"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
+	cfg *config.Config
 	repo repository.UserRepo
 }
 
-func NewUserService(repo repository.UserRepo) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(cfg *config.Config,repo repository.UserRepo) *UserService {
+	return &UserService{
+		cfg: cfg,
+		repo: repo}
 }
 
 func (s *UserService) GetAllUsers() ([]model.User, error) {
@@ -25,6 +30,8 @@ func (s *UserService) GetAllUsers() ([]model.User, error) {
 func (s *UserService) GetUser(id int) (*model.User, error) {
 	return s.repo.GetByID(id)
 }
+
+
 func (s *UserService) CreateUser(user *model.User) error {
 	if err := s.validateUser(*user); err != nil {
 		return err
@@ -39,6 +46,19 @@ func (s *UserService) CreateUser(user *model.User) error {
 	user.Password=string(hashed)
 	return s.repo.Create(user)
 }
+
+func(s *UserService) Login(email ,password string)(string,error){
+	u,err:=s.repo.GetByEmail(email)
+	if err!=nil{
+		return "",err
+	}
+	if err:=s.CheckPassword(email,password);err!=nil{
+		return "",err
+	}
+	
+	return auth.GenerateToken(u,s.cfg)
+}
+
 func (s *UserService) UpdateUser(id int, user model.User) error {
 	if id < 0 {
 		return errors.NewValidationError(id, "id cannot be negative")
