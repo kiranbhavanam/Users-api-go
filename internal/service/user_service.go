@@ -1,10 +1,13 @@
 package service
 
 import (
+	"fmt"
 	"strings"
 	"user-management/internal/errors"
 	"user-management/internal/model"
 	"user-management/internal/repository"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -29,6 +32,11 @@ func (s *UserService) CreateUser(user *model.User) error {
 	if s.repo.ExistsByEmail(user.Email){
 		return errors.NewDuplicateError(user.ID,"already existed with the email")
 	}
+	hashed,err:=bcrypt.GenerateFromPassword([]byte(user.Password),bcrypt.DefaultCost)
+	if err!=nil{
+		return fmt.Errorf("error while encrypting password %w",err)
+	}
+	user.Password=string(hashed)
 	return s.repo.Create(user)
 }
 func (s *UserService) UpdateUser(id int, user model.User) error {
@@ -52,7 +60,7 @@ func (s *UserService) UpdateUser(id int, user model.User) error {
         if s.repo.ExistsByEmail(user.Email) {
             return errors.NewDuplicateError("email", user.Email)
         }
-    }
+    } 
 	return s.repo.Update(id,user)
 }
 func(s *UserService) DeleteUser(id int)error{
@@ -79,5 +87,16 @@ func (s *UserService) validateUser(user model.User) error {
 	if email == "" {
 		return errors.NewValidationError(user.Email, "mail can't be null")
 	}
+	if user.Password==""{
+		return errors.NewValidationError(user.Password, "password can't be null")
+	}
 	return nil
+}
+
+func (s *UserService) CheckPassword(email,plainPassword string)error{
+	user,err:=s.repo.GetByEmail(email)
+	if err!=nil{
+		return err
+	}
+	return bcrypt.CompareHashAndPassword([]byte(user.Password),[]byte(plainPassword))
 }

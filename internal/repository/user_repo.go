@@ -10,6 +10,7 @@ import (
 type UserRepo interface {
 	GetAll() ([]model.User, error)
 	GetByID(id int) (*model.User, error)
+	GetByEmail(email string) (*model.User, error)
 	Create(user *model.User) error
 	Update(id int, user model.User) error
 	Delete(id int) error
@@ -59,6 +60,19 @@ func (r *PostgresRepository) GetByID(id int) (*model.User, error) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewNotFoundError(id, "no user with that id")
+		}
+		return nil, fmt.Errorf("error while scaning row data:%w ", err)
+	}
+	return &user, nil
+}
+func (r *PostgresRepository) GetByEmail(email string) (*model.User, error) {
+	query := `select id,username,email,name,isactive from Users where email=$1`
+	row := r.db.QueryRow(query,email)
+	var user model.User
+	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Name, &user.IsActive)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.NewNotFoundError(email, "no user with that id")
 		}
 		return nil, fmt.Errorf("error while scaning row data:%w ", err)
 	}
