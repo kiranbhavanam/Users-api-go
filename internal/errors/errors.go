@@ -20,17 +20,17 @@ func (v *ValidationError) Error()string{
 
 
 type NotFoundError struct{
-	ID int
+	Val interface{}
 	Resource string
 }
 
 func (e *NotFoundError) Error()string{
-	return (fmt.Sprintf("%s not found with id %d",e.Resource,e.ID))
+	return (fmt.Sprintf("%s not found with id %d",e.Resource,e.Val))
 }
 
-func NewNotFoundError(id int,resource string) *NotFoundError{
+func NewNotFoundError(val interface{},resource string) *NotFoundError{
 	return &NotFoundError{
-		ID: id,
+		Val: val,
 		Resource: resource,
 	}
 }

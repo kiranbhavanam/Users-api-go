@@ -66,7 +66,7 @@ func (h *UserHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) UpdateHandler(w http.ResponseWriter,r *http.Request){
 	vars:=mux.Vars(r)
 	id,err:=strconv.Atoi(vars["id"])
-	fmt.Println("update handler called",id)
+	// fmt.Println("update handler called",id)
 	if err!=nil{
 		http.Error(w,"invalid id format ",http.StatusBadRequest)
 		return
@@ -77,7 +77,7 @@ func (h *UserHandler) UpdateHandler(w http.ResponseWriter,r *http.Request){
 		http.Error(w,"invalid json",http.StatusBadRequest)
 		return
 	}
-	fmt.Println("ddata to update:",user)
+	// fmt.Println("data to update:",user)
 
 	err=h.service.UpdateUser(id,user)
 	if err!=nil{
@@ -86,7 +86,7 @@ func (h *UserHandler) UpdateHandler(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	updatedUser, err := h.service.GetUser(id)
-	fmt.Println("updated user:",updatedUser)
+	// fmt.Println("updated user:",updatedUser)
     if err != nil {
         h.handleServiceError(w, err)
         return
@@ -119,5 +119,7 @@ func (h *UserHandler) handleServiceError(w http.ResponseWriter,err error){
 		http.Error(w,e.Error(),http.StatusNotFound)
 	case *errors.DuplicateError:
 		http.Error(w,e.Error(),http.StatusConflict)
+	default:
+		http.Error(w,fmt.Sprintf("unknown error %w",err),http.StatusExpectationFailed)
 	}
 }

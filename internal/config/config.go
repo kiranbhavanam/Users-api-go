@@ -1,6 +1,11 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strconv"
+	"time"
+)
 
 type DatabaseConfig struct{
 	Host string
@@ -9,19 +14,33 @@ type DatabaseConfig struct{
 	Password string
 	DatabaseName string
 	SSLMode string
+	MaxOpenConns int
+	MaxIdleConns int
+	MaxLifeTime time.Duration
 }
 
 func LoadDBConfig() *DatabaseConfig{
+	port,_:=strconv.Atoi(getEnv("DB_PORT","5433"))
 	return &DatabaseConfig{
-		Host:"localhost",
-		Port:5433,
-		User:"postgres",
-		Password: "password",
-		DatabaseName: "userdb",
-		SSLMode: "disable",
+		Host:getEnv("DB_HOST","localhost"),
+		Port:port,
+		User:getEnv("DB_USER","postgres"),
+		Password: getEnv("DB_PASSWORD","password"),
+		DatabaseName: getEnv("DB_NAME","userdb"),
+		SSLMode: getEnv("DB_SSLMODE","disable"),
+		MaxOpenConns:25,
+		MaxIdleConns:25,
+		MaxLifeTime:5*time.Minute,
 	}
 }
 func (cfg *DatabaseConfig) GetConnectionString()string{
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 cfg.Host,cfg.Port,cfg.User,cfg.Password,cfg.DatabaseName,cfg.SSLMode)
+}
+
+func getEnv(value string,def string)string{
+	if val:=os.Getenv(value);val!=""{
+		return val
+	}
+	return def
 }
