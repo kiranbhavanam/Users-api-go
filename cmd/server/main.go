@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	"user-management/internal/config"
 	"user-management/internal/handlers"
 	"user-management/internal/middleware"
@@ -15,10 +16,18 @@ import (
 
 func main(){
 	cfg:=config.LoadConfig()
+	loghandler:=slog.NewJSONHandler(os.Stdout,&slog.HandlerOptions{
+		Level: slog.LevelInfo,
+		AddSource: false,
+	})
+	slog.SetDefault(slog.New(loghandler))
+	slog.Info("application starting", "version", "1.0.0")
+
 	connectionstring:=config.LoadDBConfig().GetConnectionString()
 	repo,err:=repository.NewPostgresRepository(connectionstring)
 	if err!=nil{
-		fmt.Println("error while loading db",err)
+		slog.Error("error while loading db","error",err)
+		os.Exit(1)
 	}
 	service:=service.NewUserService(cfg,repo)
 	handler:=handlers.NewUserHandler(service)
@@ -35,9 +44,9 @@ func main(){
 	protected.HandleFunc("/users/{id:[0-9]+}",handler.UpdateHandler).Methods("PUT")
 	protected.HandleFunc("/users/{id:[0-9]+}",handler.DeleteHandler).Methods("DELETE")
 
-	fmt.Println("starting user server on 8080:")
+	slog.Info("starting user server","port", 8080)
 	if err:=http.ListenAndServe(":8080",router);err!=nil{
-		fmt.Println("unable to start server")
+		slog.Error("unable to start server","error",err,"port",8080)
 	}
 
 }
