@@ -31,7 +31,7 @@ func LoadConfig() *Config{
 		log.Fatal("DB url can't be empty ")
 	}
 	secretkey:=getEnv("JWTSecret","secret_key")
-	expiry,_:=time.ParseDuration(getEnv("JWTExpiry","5m"))
+	expiry,_:=time.ParseDuration(getEnv("JWTExpiry","5h"))
 	return &Config{
 		dburl: dbURL,
 		JWTSecret: secretkey,

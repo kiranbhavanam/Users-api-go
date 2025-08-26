@@ -17,7 +17,7 @@ import (
 func main(){
 	cfg:=config.LoadConfig()
 	loghandler:=slog.NewJSONHandler(os.Stdout,&slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: slog.LevelDebug,
 		AddSource: false,
 	})
 	slog.SetDefault(slog.New(loghandler))

@@ -51,19 +51,18 @@ func (s *UserService) CreateUser(user *model.User) error {
 }
 
 func (s *UserService) Login(email, password string) (string, error) {
-	u, err := s.repo.GetByEmail(email)
+	u, err := s.CheckPassword(email, password)
 	if err != nil {
+		slog.Error("Invalid password.Try again","error",err)
 		return "", err
 	}
-	if err := s.CheckPassword(email, password); err != nil {
+	slog.Info("Password matched!!","user_email",email)
+	token, err := auth.GenerateToken(u, s.cfg)
+	if err != nil {
+		slog.Error("token generation failed", "error", err)
 		return "", err
 	}
-	token,err:= auth.GenerateToken(u, s.cfg)
-	if err!=nil{
-		slog.Error("token generation failed","error",err)
-		return "",err
-	}
-	return token,nil
+	return token, nil
 }
 
 func (s *UserService) UpdateUser(id int, user model.User) error {
@@ -120,11 +119,11 @@ func (s *UserService) validateUser(user model.User) error {
 	return nil
 }
 
-func (s *UserService) CheckPassword(email, plainPassword string) error {
+func (s *UserService) CheckPassword(email, plainPassword string) (*model.User, error) {
 	user, err := s.repo.GetByEmail(email)
 	if err != nil {
 		slog.Error("password check failed (user lookup)", "error", err, "email", email)
-		return err
+		return nil, err
 	}
-	return bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(plainPassword))
+	return user, bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(plainPassword))
 }
